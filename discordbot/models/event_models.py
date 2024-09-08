@@ -1,8 +1,9 @@
 from typing import Annotated, Literal, Optional
 
+from discord import ScheduledEvent
 from pydantic import Field
 
-from src.discordbot.models import supabase_models
+from discordbot.models import supabase_models
 
 
 class Event(supabase_models.SupabaseModel):
@@ -42,3 +43,18 @@ class Event(supabase_models.SupabaseModel):
         ...,
         description="The location of the event"
     )]
+
+    @staticmethod
+    def from_scheduled_event(event: ScheduledEvent):
+        return Event(
+            id=str(event.id),
+            name=event.name,
+            description=event.description,
+            entity_type=event.entity_type.name,
+            entity_id=event.entity_id,
+            start_time=int(event.start_time.timestamp()),
+            end_time=int(event.end_time.timestamp()) if event.end_time else None,
+            status=event.status.name,
+            user_count=event.user_count,
+            location=event.location
+        )

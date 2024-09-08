@@ -1,7 +1,7 @@
 from typing import TypeVar, Dict, Type
 
-from src.discordbot.models import supabase_models
-from src.discordbot.supabase_manager import SupabaseManager
+from discordbot.models import supabase_models
+from discordbot.store.supabase_manager import SupabaseManager
 
 # Registers can hold any generic type
 T = TypeVar("T", bound=supabase_models.SupabaseModel)

@@ -1,9 +1,9 @@
-from typing import TypeVar, Generic, Optional, Type
+from typing import TypeVar, Generic, Optional, Type, List
 
 from supabase._async.client import AsyncClient, create_client
 
-from src.discordbot.models import supabase_models
-
+from discordbot.models import supabase_models
+from discordbot.settings import SETTINGS
 
 T = TypeVar("T", bound=supabase_models.SupabaseModel)
 
@@ -13,11 +13,17 @@ class SupabaseManager(Generic[T]):
     A manager for 1 supabase table
     """
 
-    def __init__(self, api_url: str, api_key: str, table_name: str, model: Type[T]):
-        self.api_url = api_url
-        self.api_key = api_key
+    def __init__(
+            self,
+            table_name: str,
+            model: Type[T],
+            api_url: str = SETTINGS.supabase_api_url,
+            api_key: str = SETTINGS.supabase_api_key
+    ):
         self.table_name = table_name
         self.model = model
+        self.api_url = api_url
+        self.api_key = api_key
 
     async def client(self) -> AsyncClient:
         """
@@ -53,3 +59,20 @@ class SupabaseManager(Generic[T]):
             return None
 
         return self.model(**result.data[0])
+
+    async def remove(self, object_id: str):
+        """
+        Removes the object with the given ID from the database
+        :param object_id: The ID of the object to remove
+        """
+        supabase = await self.client()
+        await supabase.table(self.table_name).delete().eq("id", object_id).execute()
+
+    async def list(self) -> List[T]:
+        """
+        Lists all objects in the table
+        :return: A list of all objects in the table
+        """
+        supabase = await self.client()
+        result = await supabase.table(self.table_name).select("*").execute()
+        return [self.model(**data) for data in result.data]
