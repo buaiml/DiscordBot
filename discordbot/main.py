@@ -3,7 +3,9 @@ import asyncio
 import discord
 from discord import app_commands
 
+from discordbot.commands import notification_command
 from discordbot.models.event_models import Event
+from discordbot.models.user_models import User
 from discordbot.settings import SETTINGS
 from discordbot.store.supabase_manager import SupabaseManager
 from discordbot.util.registers import SupabaseRegister
@@ -16,9 +18,11 @@ class DiscordClient(discord.Client):
 
         # Managers handle uploading/downloading supabase data
         self.supabase_managers = SupabaseRegister()
-        self.supabase_managers[Event] = SupabaseManager(
-            "events", Event
-        )
+        self.supabase_managers[Event] = SupabaseManager("events", Event)
+        self.supabase_managers[User] = SupabaseManager("users", User)
+
+        # User commands
+        notification_command.register(self.tree, self.supabase_managers[User])
 
     async def on_ready(self):
         # Avoid circular imports
@@ -45,9 +49,9 @@ class DiscordClient(discord.Client):
         converted_event = Event.from_scheduled_event(scheduled_event)
         await self.supabase_managers[Event].upsert(converted_event)
 
-    async def on_scheduled_event_update(self, scheduled_event: discord.ScheduledEvent):
-        print(f"Updating event '{scheduled_event.name}' in supabase")
-        converted_event = Event.from_scheduled_event(scheduled_event)
+    async def on_scheduled_event_update(self, before: discord.ScheduledEvent, after: discord.ScheduledEvent):
+        print(f"Updating event '{before.name}' in supabase")
+        converted_event = Event.from_scheduled_event(after)
         await self.supabase_managers[Event].upsert(converted_event)
 
     async def on_scheduled_event_remove(self, scheduled_event: discord.ScheduledEvent):
@@ -55,7 +59,7 @@ class DiscordClient(discord.Client):
         await self.supabase_managers[Event].remove(str(scheduled_event.id))
 
 
-async def main():
+def main():
     intents = discord.Intents.default()
     intents.message_content = True  # Reads message content
     intents.guild_scheduled_events = True  # See scheduled events
@@ -63,12 +67,9 @@ async def main():
     client = DiscordClient(intents=intents)
 
     print("Running bot")
-    try:
-        await client.start(SETTINGS.discord_token)
-    except KeyError:
-        pass
+    client.run(SETTINGS.discord_token)
     print("All done")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
