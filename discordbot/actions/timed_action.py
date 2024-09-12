@@ -22,5 +22,8 @@ class TimedAction(ABC):
         """
         print(f"Running {self.__class__.__name__}")
         while True:
+            print(f"Updating {self.__class__.__name__}")
             await self.action()
+            print(f"Done updating {self.__class__.__name__}! Sleeping for {self.interval} seconds")
             await asyncio.sleep(self.interval)
+

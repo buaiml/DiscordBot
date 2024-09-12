@@ -13,7 +13,7 @@ from discordbot.util.registers import SupabaseRegister
 
 class DiscordClient(discord.Client):
     def __init__(self, intents: discord.Intents):
-        super().__init__(intents=intents)
+        super().__init__(intents=intents, member_cache_flags=discord.MemberCacheFlags.all())
         self.tree = app_commands.CommandTree(self)
 
         # Managers handle uploading/downloading supabase data
@@ -44,23 +44,35 @@ class DiscordClient(discord.Client):
         except Exception as e:
             print(f"An error occurred while syncing commands: {e}")
 
+    async def on_member_join(self, member: discord.Member):
+        #member.send(content=content, embed=embed)
+        pass
+
     async def on_scheduled_event_create(self, scheduled_event: discord.ScheduledEvent):
         print(f"Sending event '{scheduled_event.name}' to supabase")
-        converted_event = Event.from_scheduled_event(scheduled_event)
-        await self.supabase_managers[Event].upsert(converted_event)
+        await self.update_and_upsert_event(scheduled_event)
 
     async def on_scheduled_event_update(self, before: discord.ScheduledEvent, after: discord.ScheduledEvent):
         print(f"Updating event '{before.name}' in supabase")
-        converted_event = Event.from_scheduled_event(after)
-        await self.supabase_managers[Event].upsert(converted_event)
+        await self.update_and_upsert_event(after)
 
     async def on_scheduled_event_remove(self, scheduled_event: discord.ScheduledEvent):
         print(f"Removing event '{scheduled_event.name}' from supabase")
         await self.supabase_managers[Event].remove(str(scheduled_event.id))
 
+    async def update_and_upsert_event(self, event: discord.ScheduledEvent):
+        previous_event = await self.supabase_managers[Event].query(str(event.id))
+        if previous_event:
+            previous_event.update(event)
+            await self.supabase_managers[Event].upsert(previous_event)
+        else:
+            converted_event = Event.from_scheduled_event(event)
+            await self.supabase_managers[Event].upsert(converted_event)
+
 
 def main():
     intents = discord.Intents.default()
+    intents.members = True  # Reads member list
     intents.message_content = True  # Reads message content
     intents.guild_scheduled_events = True  # See scheduled events
 

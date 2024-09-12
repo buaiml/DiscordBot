@@ -49,7 +49,7 @@ def register(tree: CommandTree, manager: SupabaseManager[User]):
             user.is_ping_hour_before = on.value == 1
         await manager.upsert(user)
 
-        msg = f"Hour before notifications {'enabled' if user.is_ping_day_before else 'disabled'}"
+        msg = f"Hour before notifications **{'enabled' if user.is_ping_day_before else 'disabled'}**"
         await interaction.followup.send(content=msg)
 
     @notifications.command(
@@ -76,7 +76,7 @@ def register(tree: CommandTree, manager: SupabaseManager[User]):
             user.is_ping_day_before = on.value == 1
         await manager.upsert(user)
 
-        msg = f"Day before notifications {'enabled' if user.is_ping_day_before else 'disabled'}"
+        msg = f"Day before notifications **{'enabled' if user.is_ping_day_before else 'disabled'}**"
         await interaction.followup.send(content=msg)
 
     # Add the commands to the tree
