@@ -1,7 +1,7 @@
 import asyncio
 from abc import ABC, abstractmethod
 
-from discordbot.main import DiscordClient
+from main import DiscordClient
 
 
 class TimedAction(ABC):

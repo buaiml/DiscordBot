@@ -5,10 +5,10 @@ import discord
 from discord import ScheduledEvent
 
 from discordbot.actions.timed_action import TimedAction
-from discordbot.main import DiscordClient
 from discordbot.models.event_models import Event
 from discordbot.models.user_models import User
 from discordbot.settings import SETTINGS
+from main import DiscordClient
 
 
 class EventAction(TimedAction):
